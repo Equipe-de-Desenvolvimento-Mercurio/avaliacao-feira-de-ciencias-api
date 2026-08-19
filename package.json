@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "pg": "^8.23.0"
+  },
+  "name": "avaliacao-feira-de-ciencias-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Equipe-de-Desenvolvimento-Mercurio/avaliacao-feira-de-ciencias-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Equipe-de-Desenvolvimento-Mercurio/avaliacao-feira-de-ciencias-api/issues"
+  },
+  "homepage": "https://github.com/Equipe-de-Desenvolvimento-Mercurio/avaliacao-feira-de-ciencias-api#readme"
+}
