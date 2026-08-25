@@ -11,14 +11,10 @@ router.post("/login", async (req, res) => {
       error: "Não é possivel fazer login",
     });
   }
-
-
-  console.log(email, senha)
   let usuario = await pool.query("SELECT * FROM usuario WHERE email = $1", [
     email,
   ]);
 
-  console.log(usuario.rows[0])
   if (usuario.rowCount == 0) {
     return res.status(404).json({
       error: "Usuario ou senha não encontrados",
@@ -27,7 +23,7 @@ router.post("/login", async (req, res) => {
 
   usuario = usuario.rows[0];
 
-  if (!compararSenha(usuario.senha_hash, senha)) {
+  if (!await compararSenha(usuario.senha_hash, senha)) {
     return res.status(404).json({
       error: "Usuario ou senha não encontrados",
     });
@@ -63,8 +59,17 @@ router.post("/cadastrar", async (req, res) => {
     });
   }
 
+  let usuarioExiste = async (email) => {
+    let usuarioEmail = await pool.query("SELECT 1 FROM usuario WHERE email = $1", [email]);
+    return usuarioEmail.rowCount > 0;
+  }
+  if (await usuarioExiste(email)){
+    res.status(400).json({
+      error: "Usuario já existe"
+    })
+  }
   if (!TIPOS_AVALIADOR.includes(tipo_avaliador) || !TIPOS_USUARIOS.includes(tipo_usuario)){
-    return res.status(403).json({
+    return res.status(400).json({
       error: "Informações invalidas"
     });
   }
