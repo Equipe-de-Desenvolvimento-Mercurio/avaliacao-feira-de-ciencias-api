@@ -1,8 +1,10 @@
 {
   "dependencies": {
     "argon2": "^0.45.1",
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0"
   },
   "name": "avaliacao-feira-de-ciencias-api",

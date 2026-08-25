@@ -1,6 +1,10 @@
 import express from "express";
 import pool from "../config/db.js";
-import {criarHash, compararSenha} from "../services/security.js";
+import {criarHash, compararSenha, gerarTokenJwt} from "../services/security.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv"
+
+const SECRET = process.env.SECRET_JWT
 
 const router = express.Router();
 
@@ -28,6 +32,16 @@ router.post("/login", async (req, res) => {
       error: "Usuario ou senha não encontrados",
     });
   }
+
+  const token = gerarTokenJwt(
+    {
+      id: usuario.id,
+      email: usuario.email,
+      tipo_avaliador: usuario.tipo_avaliador,
+      tipo_usuario: usuario.tipo_usuario
+    }
+  );
+
   res.status(200).json({
     mensagem: "Login feito com Sucesso",
     data: {
@@ -36,6 +50,7 @@ router.post("/login", async (req, res) => {
       email: usuario.email,
       tipo_usuario: usuario.tipo_usuario,
     },
+    token: token
   });
 });
 
