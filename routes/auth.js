@@ -12,11 +12,13 @@ router.post("/login", async (req, res) => {
     });
   }
 
+
+  console.log(email, senha)
   let usuario = await pool.query("SELECT * FROM usuario WHERE email = $1", [
     email,
   ]);
 
-  // console.log(usuario.rows[0])
+  console.log(usuario.rows[0])
   if (usuario.rowCount == 0) {
     return res.status(404).json({
       error: "Usuario ou senha não encontrados",
@@ -25,7 +27,7 @@ router.post("/login", async (req, res) => {
 
   usuario = usuario.rows[0];
 
-  if (compararSenha(usuario.senha_hash, senha)) {
+  if (!compararSenha(usuario.senha_hash, senha)) {
     return res.status(404).json({
       error: "Usuario ou senha não encontrados",
     });

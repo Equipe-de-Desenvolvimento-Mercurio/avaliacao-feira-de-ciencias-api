@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "argon2": "^0.45.1",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "pg": "^8.23.0"
@@ -8,9 +9,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
   },
   "repository": {
     "type": "git",
@@ -23,5 +24,8 @@
   "bugs": {
     "url": "https://github.com/Equipe-de-Desenvolvimento-Mercurio/avaliacao-feira-de-ciencias-api/issues"
   },
-  "homepage": "https://github.com/Equipe-de-Desenvolvimento-Mercurio/avaliacao-feira-de-ciencias-api#readme"
+  "homepage": "https://github.com/Equipe-de-Desenvolvimento-Mercurio/avaliacao-feira-de-ciencias-api#readme",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
 }
