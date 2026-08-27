@@ -98,4 +98,24 @@ router.post("/cadastrar", async (req, res) => {
     });
 })
 
+
+router.delete('/usuario/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const textoQuery = 'DELETE FROM usuario WHERE id_usuario = $1';
+
+  const resultado = await pool.query(textoQuery, [id]);
+
+  if (resultado.rowCount === 0) {
+    return res.status(404).json({
+      erro: "Usuário não encontrado."
+    });
+  }
+
+  return res.status(200).json({
+    mensagem: "Usuário deletado com sucesso!"
+  });
+});
+
+
 export default router;
