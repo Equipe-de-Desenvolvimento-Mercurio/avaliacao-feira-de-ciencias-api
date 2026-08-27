@@ -4,6 +4,37 @@ import express from "express";
 
 const router = express.Router();
 
+const STATUS_EVENTOS = ["planejado", "em_andamento", "encerrado"];
+
+// Criar Evento
+router.post("/", async (req, res) => {
+    const { nome_evento, data_evento, status = "planejado" } = req.body;
+
+    if (!nome_evento || typeof nome_evento !== "string" || nome_evento.length > 150) {
+        return res.status(400).json({
+            error: "Nome do evento inválido"
+        });
+    }
+
+    if (!verificarData(data_evento)) {
+        return res.status(400).json({
+            error: "Data do evento inválida. Use o formato YYYY-MM-DD"
+        });
+    }
+
+    if (!STATUS_EVENTOS.includes(status)) {
+        return res.status(400).json({
+            error: "Status do evento inválido"
+        });
+    }
+
+    const evento = await pool.query(
+        "INSERT INTO evento (nome_evento, data_evento, status) VALUES ($1, $2, $3) RETURNING *",
+        [nome_evento, data_evento, status]
+    );
+
+    return res.status(201).json(evento.rows[0]);
+});
 
 // {
 //     "nome_evento":"SIC 2026",
@@ -32,27 +63,18 @@ router.get("/:id", async (req, res) => {
 
 });
 
-// Dentinar Evento para Professor
-router.post("/usuario/:email", (req, res) => {
-});
-
-// Editar Eventos
-
-// Liberar Evento
-
-// Bloquear Evento
-
 
 function verificarData(date){
-        let arr = date.split("-");
-        if (arr.length != 3){
-            return false
-        }
-        console.log(arr);
-        if (arr[2].length == 2 && arr[1].length == 2 && arr[0].length == 4) {
-            return true;
-        }
+    if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return false;
     }
+
+    const [year, month, day] = date.split("-").map(Number);
+    const parsedDate = new Date(Date.UTC(year, month - 1, day));
+
+    return parsedDate.getUTCFullYear() === year
+        && parsedDate.getUTCMonth() === month - 1
+        && parsedDate.getUTCDate() === day;
+}
 
 export default router;
