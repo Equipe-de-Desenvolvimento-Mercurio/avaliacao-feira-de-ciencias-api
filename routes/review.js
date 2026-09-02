@@ -4,61 +4,61 @@ import pool from "../config/db.js"
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-    let { id_avaliador, id_projeto, notas, comentario} = req.body
+    const { id_avaliador, id_projeto, notas, comentario } = req.body;
 
-    let media = await calcularMedia(notas, id_avaliador, res);
-
-    let projeto = await pool.query("SELECT * FROM projeto WHERE id_projeto = $1", [id_projeto]);
-    if (projeto.rowCount == 0){
-        return res.status(404).json({
-            error: "Projeto não encontrado"
+    if (!id_avaliador || !id_projeto || !Array.isArray(notas) || notas.length !== 6) {
+        return res.status(400).json({
+            error: "Informe o avaliador, o projeto e exatamente 6 notas"
         });
     }
 
-    await pool.query(
-        "INSERT INTO avaliacao (id_avaliador, id_projeto, nota1, nota2, nota3, nota4, nota5, nota6, nota_media, comentario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
-        [
-            id_avaliador,
-            id_projeto,
-            notas["1"],
-            notas["2"],
-            notas["3"],
-            notas["4"],
-            notas["5"],
-            notas["6"],
-            media,
-            comentario
-        ]
+    const notasNumericas = notas.map(Number);
+    if (notasNumericas.some((nota) => !Number.isFinite(nota) || nota < 0 || nota > 10)) {
+        return res.status(400).json({
+            error: "As notas devem ser números entre 0 e 10"
+        });
+    }
+
+    const avaliador = await pool.query(
+        "SELECT tipo_usuario, tipo_avaliador FROM usuario WHERE id_usuario = $1",
+        [id_avaliador]
     );
-
-    return res.status(200).json({
-        message: "Projeto Avaliado com sucesso!!"
-    });
-
-});
-
-async function calcularMedia(notas, id_avaliador, res){
-    let sum = 0
-    notas.map((i) => {
-        sum += i;
-    });
-
-    let tipoAvaliador = await pool.query("SELECT tipo_avaliador FROM usuario WHERE id_usuario = $1", [id_avaliador]);
-    if (tipoAvaliador.rowCount == 0){
+    if (avaliador.rowCount === 0 || avaliador.rows[0].tipo_usuario !== "professor" || !avaliador.rows[0].tipo_avaliador) {
         return res.status(404).json({
             error: "Professor avaliador não encontrado"
         });
     }
 
-    let tipo = tipoAvaliador.rows[0].tipo_avaliador;
+    const projeto = await pool.query(
+        "SELECT 1 FROM projeto WHERE id_projeto = $1",
+        [id_projeto]
+    );
+    if (projeto.rowCount === 0) {
+        return res.status(404).json({
+            error: "Projeto não encontrado"
+        });
+    }
 
-    let pesos = {
-        "artistico": 1,
-        "tecnico": 3
-    };
+    const avaliacaoExistente = await pool.query(
+        "SELECT 1 FROM avaliacao WHERE id_avaliador = $1 AND id_projeto = $2",
+        [id_avaliador, id_projeto]
+    );
+    if (avaliacaoExistente.rowCount > 0) {
+        return res.status(409).json({
+            error: "Este projeto já foi avaliado por este usuário"
+        });
+    }
 
-    return sum * pesos[tipo];
+    const media = notasNumericas.reduce((total, nota) => total + nota, 0) / notasNumericas.length;
 
-}
+    await pool.query(
+        "INSERT INTO avaliacao (id_avaliador, id_projeto, nota1, nota2, nota3, nota4, nota5, nota6, nota_media, comentario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        [id_avaliador, id_projeto, ...notasNumericas, media, comentario || null]
+    );
+
+    return res.status(201).json({
+        message: "Projeto avaliado com sucesso!!"
+    });
+});
 
 export default router;
