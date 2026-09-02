@@ -16,7 +16,7 @@
             });
         }
 
-        if (!verificarData(data_evento)) {aa
+        if (!verificarData(data_evento)) {
             return res.status(400).json({
                 error: "Data do evento inválida. Use o formato YYYY-MM-DD"
             });
