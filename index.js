@@ -3,6 +3,7 @@ import authRoute from "./routes/auth.js"
 import eventRoute from "./routes/event.js"
 import projectRoute from "./routes/project.js"
 import reviewRoute from "./routes/review.js"
+import teacherRoute from "./routes/teacher.js"
 
 const app = express();
 app.use(express.json());
@@ -12,6 +13,7 @@ app.use("/auth", authRoute);
 app.use("/event", eventRoute);
 app.use("/project", projectRoute);
 app.use("/review", reviewRoute);
+app.use("/teacher", teacherRoute);
 
 app.listen(3000, () => {
     console.log("Executando...")
