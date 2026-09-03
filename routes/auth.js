@@ -1,6 +1,6 @@
 import express from "express";
 import pool from "../config/db.js";
-import {criarHash, compararSenha, gerarTokenJwt} from "../services/security.js";
+import { criarHash, compararSenha, gerarTokenJwt } from "../services/security.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv"
 
@@ -63,12 +63,24 @@ router.post("/login", async (req, res) => {
 // }
 // Cadastrar Usuario
 router.post("/cadastrar", async (req, res) => {
-  let {nome, email, senha, tipo_usuario, tipo_avaliador} = req.body;
+  let { nome, email, senha, tipo_usuario, tipo_avaliador, eventos } = req.body;
 
   const TIPOS_USUARIOS = ["professor", "coordenador"];
   const TIPOS_AVALIADOR = ["tecnico", "artistico"];
+  if (Array.isArray(eventos) && eventos.length > 0) {
 
-  if (!nome || !email || !senha || !tipo_usuario || !tipo_avaliador){
+    for (let i of eventos) {
+      let evento = await pool.query("SELECT * FROM evento WHERE id_evento = $1", [i]);
+
+      if (evento.rowCount == 0) {
+        return res.status(404).json({
+          error: "Evento não encontrado"
+        });
+      }
+    }
+  } 
+
+  if (!nome || !email || !senha || !tipo_usuario || !tipo_avaliador) {
     return res.status(403).json({
       error: "Não foi possível cadastrar"
     });
@@ -78,12 +90,12 @@ router.post("/cadastrar", async (req, res) => {
     let usuarioEmail = await pool.query("SELECT 1 FROM usuario WHERE email = $1", [email]);
     return usuarioEmail.rowCount > 0;
   }
-  if (await usuarioExiste(email)){
-    res.status(400).json({
+  if (await usuarioExiste(email)) {
+    return res.status(400).json({
       error: "Usuario já existe"
     })
   }
-  if (!TIPOS_AVALIADOR.includes(tipo_avaliador) || !TIPOS_USUARIOS.includes(tipo_usuario)){
+  if (!TIPOS_AVALIADOR.includes(tipo_avaliador) || !TIPOS_USUARIOS.includes(tipo_usuario)) {
     return res.status(400).json({
       error: "Informações invalidas"
     });
@@ -91,11 +103,18 @@ router.post("/cadastrar", async (req, res) => {
 
   let hash = await criarHash(senha);
 
-    await pool.query("INSERT INTO usuario (nome_usuario, email, senha_hash, tipo_usuario, tipo_avaliador) VALUES ($1, $2, $3, $4, $5)", [nome, email, hash, tipo_usuario, tipo_avaliador]);
+  let user = await pool.query("INSERT INTO usuario (nome_usuario, email, senha_hash, tipo_usuario, tipo_avaliador) VALUES ($1, $2, $3, $4, $5) RETURNING id_usuario", [nome, email, hash, tipo_usuario, tipo_avaliador]);
 
-    return res.status(200).json({
-      message: "Usuario Registrado com sucesso"
-    });
+  let idUser = user.rows[0].id_usuario;
+
+  if (Array.isArray(eventos) && eventos.length > 0) {
+    for (let i of eventos) {
+      await pool.query("INSERT INTO participacao_evento (id_usuario, id_evento) VALUES ($1, $2)", [idUser, i])
+    }
+  }
+  return res.status(200).json({
+    message: "Usuario Registrado com sucesso"
+  });
 })
 
 
