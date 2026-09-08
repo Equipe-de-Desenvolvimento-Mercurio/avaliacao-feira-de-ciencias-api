@@ -49,3 +49,13 @@ CREATE TABLE avaliacao (
     comentario      TEXT,
     data_criacao    TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE criterio_avaliativo (
+    id_criterio      BIGSERIAL PRIMARY KEY,
+    tipo_avaliador   tipo_avaliador_enum NOT NULL,
+    numero_criterio  SMALLINT NOT NULL CHECK (numero_criterio BETWEEN 1 AND 6), -- corresponde a nota1..nota6
+    nome_criterio    VARCHAR(150) NOT NULL,
+    descricao        TEXT,
+    data_criacao     TIMESTAMP DEFAULT NOW(),
+    UNIQUE (tipo_avaliador, numero_criterio)
+);
