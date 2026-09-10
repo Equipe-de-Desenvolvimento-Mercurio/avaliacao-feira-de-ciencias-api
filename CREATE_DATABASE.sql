@@ -50,7 +50,7 @@ CREATE TABLE avaliacao (
     nota4           NUMERIC(3,1) NOT NULL CHECK (nota4 BETWEEN 0 AND 10),
     nota5           NUMERIC(3,1) NOT NULL CHECK (nota5 BETWEEN 0 AND 10),
     nota6           NUMERIC(3,1) NOT NULL CHECK (nota6 BETWEEN 0 AND 10),
-    nota_media      NUMERIC(3,1) NOT NULL CHECK (nota_media BETWEEN 0 AND 10),
+    nota_media      NUMERIC(5,1) NOT NULL CHECK (nota_media BETWEEN 0 AND 180),
     comentario      TEXT,
     data_criacao    TIMESTAMP DEFAULT NOW(),
     UNIQUE (id_avaliador, id_projeto)

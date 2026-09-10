@@ -56,8 +56,7 @@
                      p.resumo,
                      p.estande,
                      COUNT(DISTINCT a.id_avaliador)::int AS total_avaliaram,
-                     COALESCE(SUM(a.nota_media), 0) AS nota_total,
-                     COALESCE(AVG(a.nota_media), 0) AS media_avaliacoes
+                     COALESCE(SUM(a.nota_media), 0) AS pontuacao_total
                  FROM projeto p
                  LEFT JOIN avaliacao a ON a.id_projeto = p.id_projeto
                  WHERE p.id_evento = $1
@@ -89,8 +88,7 @@
                              'nome_projeto', p.nome_projeto,
                              'resumo', p.resumo,
                              'estande', p.estande,
-                             'nota_total', p.nota_total,
-                             'media_avaliacoes', p.media_avaliacoes,
+                             'pontuacao_total', p.pontuacao_total,
                              'total_avaliaram', p.total_avaliaram,
                              'total_avaliadores', a.total,
                              'percentual_conclusao', COALESCE(
@@ -98,7 +96,7 @@
                                  0
                              ),
                              'concluido', p.total_avaliaram >= a.total
-                         ) ORDER BY p.nota_total DESC, p.id_projeto
+                         ) ORDER BY p.pontuacao_total DESC, p.id_projeto
                      ) FILTER (WHERE p.id_projeto IS NOT NULL),
                      '[]'::json
                  ) AS projetos

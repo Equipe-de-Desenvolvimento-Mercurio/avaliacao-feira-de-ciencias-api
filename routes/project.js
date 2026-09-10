@@ -42,7 +42,7 @@ const consultaProjeto = `
             SELECT SUM(a.nota_media)
             FROM avaliacao a
             WHERE a.id_projeto = p.id_projeto
-        ), 0) AS nota_total,
+        ), 0) AS pontuacao_total,
         (
                         SELECT COUNT(DISTINCT pe.id_usuario)
             FROM participacao_evento pe
@@ -67,7 +67,7 @@ const consultaProjeto = `
                     'nota4', a.nota4,
                     'nota5', a.nota5,
                     'nota6', a.nota6,
-                    'nota_media', a.nota_media,
+                    'pontuacao_total', a.nota_media,
                     'comentario', a.comentario,
                     'data_criacao', a.data_criacao
                 ) ORDER BY a.id_avaliacao

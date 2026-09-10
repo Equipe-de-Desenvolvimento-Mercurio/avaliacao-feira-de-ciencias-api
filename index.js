@@ -6,6 +6,7 @@ import projectRoute from "./routes/project.js"
 import reviewRoute from "./routes/review.js"
 import teacherRoute from "./routes/teacher.js"
 import criteriosRoute from "./routes/criterios.js"
+import { prepararBanco } from "./config/db.js";
 
 const app = express();
 app.use(cors({
@@ -23,6 +24,17 @@ app.use("/review", reviewRoute);
 app.use("/teacher", teacherRoute);
 app.use("/criterios", criteriosRoute);
 
-app.listen(3000, () => {
-    console.log("Executando...")
-});
+const iniciarServidor = async () => {
+    try {
+        await prepararBanco();
+
+        app.listen(3000, () => {
+            console.log("Executando...");
+        });
+    } catch (error) {
+        console.error("Não foi possível preparar o banco:", error.message);
+        process.exit(1);
+    }
+};
+
+iniciarServidor();

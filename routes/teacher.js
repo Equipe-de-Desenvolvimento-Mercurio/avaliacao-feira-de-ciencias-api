@@ -83,7 +83,7 @@ router.get("/:id_evento/:id_usuario", validarToken, async (req, res) => {
                  'nota4', a.nota4,
                  'nota5', a.nota5,
                  'nota6', a.nota6,
-                 'nota_media', a.nota_media,
+                 'pontuacao_total', a.nota_media,
                  'comentario', a.comentario,
                  'data_criacao', a.data_criacao
              ) END AS avaliacao
@@ -97,9 +97,10 @@ router.get("/:id_evento/:id_usuario", validarToken, async (req, res) => {
     );
 
     const avaliados = projetos.rows.filter((projeto) => projeto.avaliado);
-    const media = avaliados.length > 0
-        ? avaliados.reduce((total, projeto) => total + Number(projeto.avaliacao.nota_media), 0) / avaliados.length
-        : null;
+    const pontuacaoTotal = avaliados.reduce(
+        (total, projeto) => total + Number(projeto.avaliacao.pontuacao_total),
+        0
+    );
 
     return res.status(200).json({
         evento: evento.rows[0],
@@ -108,7 +109,7 @@ router.get("/:id_evento/:id_usuario", validarToken, async (req, res) => {
             total_projetos: projetos.rows.length,
             total_avaliados: avaliados.length,
             total_nao_avaliados: projetos.rows.length - avaliados.length,
-            media_avaliacoes: media === null ? null : Number(media.toFixed(1))
+            pontuacao_total: pontuacaoTotal
         },
         projetos: projetos.rows
     });
