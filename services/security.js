@@ -1,8 +1,12 @@
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv"
+import "dotenv/config";
 
-const SECRET = process.env.SECRET_JWT;
+const SECRET = process.env.SECRET_JWT || process.env.SECRET;
+
+if (!SECRET) {
+    throw new Error("Defina SECRET_JWT ou SECRET no ambiente");
+}
 
 function gerarTokenJwt(payload){
     const token = jwt.sign(
@@ -17,15 +21,15 @@ function gerarTokenJwt(payload){
 }
 
 function validarToken(req, res, next){
-    let authHeader = req.headers.authorizathion;
+    const authHeader = req.headers.authorization;
 
-    if (!authHeader){
+    if (!authHeader || !authHeader.startsWith("Bearer ")){
         return res.status(401).json({
             error: 'Token Não Informado'
         })
     }
 
-    const [_, token] = authHeader.split(" ");
+    const [, token] = authHeader.split(" ");
 
     try {
         const payload = jwt.verify(token, SECRET)
@@ -42,7 +46,15 @@ function validarToken(req, res, next){
 
 }
 function validarRoles(...roles){
+    return (req, res, next) => {
+        if (!req.usuario || !roles.includes(req.usuario.tipo_usuario)) {
+            return res.status(403).json({
+                error: "Acesso negado"
+            });
+        }
 
+        next();
+    };
 }
 
 async function criarHash(senha) {
@@ -55,4 +67,4 @@ async function compararSenha(hash, senha){
     return await argon2.verify(hash, senha)
 }
 
-export {criarHash, compararSenha, gerarTokenJwt}
+export {criarHash, compararSenha, gerarTokenJwt, validarToken, validarRoles}

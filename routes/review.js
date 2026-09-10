@@ -1,12 +1,14 @@
 import express from "express";
 import pool from "../config/db.js"
+import { validarToken } from "../services/security.js";
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
-    const { id_avaliador, id_projeto, notas, comentario } = req.body;
+router.post("/", validarToken, async (req, res) => {
+    const { id_projeto, notas, comentario } = req.body;
+    const id_avaliador = req.usuario.id_usuario;
 
-    if (!id_avaliador || !id_projeto || !Array.isArray(notas) || notas.length !== 6) {
+    if (req.usuario.tipo_usuario !== "professor" || !id_projeto || !Array.isArray(notas) || notas.length !== 6) {
         return res.status(400).json({
             error: "Informe o avaliador, o projeto e exatamente 6 notas"
         });
@@ -30,8 +32,14 @@ router.post("/", async (req, res) => {
     }
 
     const projeto = await pool.query(
-        "SELECT 1 FROM projeto WHERE id_projeto = $1",
-        [id_projeto]
+                `SELECT 1
+         FROM projeto p
+                 JOIN evento e ON e.id_evento = p.id_evento
+         JOIN participacao_evento pe ON pe.id_evento = p.id_evento
+                          AND pe.id_usuario = $1
+                 WHERE p.id_projeto = $2
+                     AND e.status = 'em_andamento'`,
+        [id_avaliador, id_projeto]
     );
     if (projeto.rowCount === 0) {
         return res.status(404).json({

@@ -1,10 +1,7 @@
 import express from "express";
 import pool from "../config/db.js";
 import { criarHash, compararSenha, gerarTokenJwt } from "../services/security.js";
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv"
-
-const SECRET = process.env.SECRET_JWT
+import { validarToken, validarRoles } from "../services/security.js";
 
 const router = express.Router();
 
@@ -35,7 +32,7 @@ router.post("/login", async (req, res) => {
 
   const token = gerarTokenJwt(
     {
-      id: usuario.id,
+      id_usuario: usuario.id_usuario,
       email: usuario.email,
       tipo_avaliador: usuario.tipo_avaliador,
       tipo_usuario: usuario.tipo_usuario
@@ -80,7 +77,7 @@ router.post("/cadastrar", async (req, res) => {
     }
   } 
 
-  if (!nome || !email || !senha || !tipo_usuario || !tipo_avaliador) {
+  if (!nome || !email || !senha || !tipo_usuario || (tipo_usuario === "professor" && !tipo_avaliador)) {
     return res.status(403).json({
       error: "Não foi possível cadastrar"
     });
@@ -95,7 +92,9 @@ router.post("/cadastrar", async (req, res) => {
       error: "Usuario já existe"
     })
   }
-  if (!TIPOS_AVALIADOR.includes(tipo_avaliador) || !TIPOS_USUARIOS.includes(tipo_usuario)) {
+  if (!TIPOS_USUARIOS.includes(tipo_usuario) ||
+      (tipo_avaliador && !TIPOS_AVALIADOR.includes(tipo_avaliador)) ||
+      (tipo_usuario === "coordenador" && tipo_avaliador)) {
     return res.status(400).json({
       error: "Informações invalidas"
     });
@@ -103,22 +102,44 @@ router.post("/cadastrar", async (req, res) => {
 
   let hash = await criarHash(senha);
 
-  let user = await pool.query("INSERT INTO usuario (nome_usuario, email, senha_hash, tipo_usuario, tipo_avaliador) VALUES ($1, $2, $3, $4, $5) RETURNING id_usuario", [nome, email, hash, tipo_usuario, tipo_avaliador]);
+  const client = await pool.connect();
 
-  let idUser = user.rows[0].id_usuario;
+  try {
+    await client.query("BEGIN");
 
-  if (Array.isArray(eventos) && eventos.length > 0) {
-    for (let i of eventos) {
-      await pool.query("INSERT INTO participacao_evento (id_usuario, id_evento) VALUES ($1, $2)", [idUser, i])
+    const user = await client.query(
+      "INSERT INTO usuario (nome_usuario, email, senha_hash, tipo_usuario, tipo_avaliador) VALUES ($1, $2, $3, $4, $5) RETURNING id_usuario",
+      [nome, email, hash, tipo_usuario, tipo_avaliador || null]
+    );
+
+    const idUser = user.rows[0].id_usuario;
+
+    if (Array.isArray(eventos) && eventos.length > 0) {
+      for (const idEvento of [...new Set(eventos)]) {
+        await client.query(
+          "INSERT INTO participacao_evento (id_usuario, id_evento) VALUES ($1, $2)",
+          [idUser, idEvento]
+        );
+      }
     }
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    return res.status(500).json({
+      error: "Não foi possível concluir o cadastro"
+    });
+  } finally {
+    client.release();
   }
+
   return res.status(200).json({
     message: "Usuario Registrado com sucesso"
   });
 })
 
 
-router.delete('/usuario/:id', async (req, res) => {
+router.delete('/usuario/:id', validarToken, validarRoles("coordenador"), async (req, res) => {
   const { id } = req.params;
 
   const textoQuery = 'DELETE FROM usuario WHERE id_usuario = $1';
