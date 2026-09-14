@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import authRoute from "./routes/auth.js"
 import eventRoute from "./routes/event.js"
 import projectRoute from "./routes/project.js"
@@ -7,6 +8,7 @@ import teacherRoute from "./routes/teacher.js"
 import criteriosRoute from "./routes/criterios.js"
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 // Endpoint de login
