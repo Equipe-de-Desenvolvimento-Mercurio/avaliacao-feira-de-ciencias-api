@@ -20,6 +20,7 @@ Rotas base:
 | Avaliacoes | `/review` |
 | Professores | `/teacher` |
 | Criterios | `/criterios` |
+| Ranking | `/ranking` |
 
 Todas as requisicoes com JSON devem usar:
 
@@ -223,6 +224,64 @@ Retorna o painel consolidado do evento. Requer token de coordenador.
 ```
 
 Os projetos do dashboard sao ordenados pela maior `pontuacao_total`.
+
+  ### GET `/ranking/:id_evento`
+
+  Retorna o ranking de todos os projetos de um evento, ordenado pela maior pontuacao total. Requer token JWT, mas pode ser consultado por qualquer usuario autenticado.
+
+  #### Parametros
+
+  | Parametro | Tipo | Descricao |
+  |---|---|---|
+  | `id_evento` | inteiro | ID do evento |
+
+  #### Exemplo de requisicao
+
+  ```http
+  GET http://localhost:3000/ranking/1
+  Authorization: Bearer SEU_TOKEN
+  ```
+
+  #### Resposta `200`
+
+  ```json
+  {
+    "evento": {
+      "id_evento": "1",
+      "nome_evento": "Feira de Ciencias 2026"
+    },
+    "ranking": [
+      {
+        "colocacao": 1,
+        "id_projeto": "3",
+        "nome_projeto": "Energia Sustentavel",
+        "resumo": "Estudo sobre energia solar",
+        "estande": "12",
+        "nota_media": "342.0",
+        "total_avaliacoes": 4
+      },
+      {
+        "colocacao": 2,
+        "id_projeto": "1",
+        "nome_projeto": "Agua Limpa",
+        "resumo": "Sistema de filtragem de agua",
+        "estande": "8",
+        "nota_media": "237.0",
+        "total_avaliacoes": 3
+      }
+    ]
+  }
+  ```
+
+  Todos os projetos do evento sao listados, inclusive os que ainda nao receberam avaliacao. Projetos sem avaliacao possuem `nota_media` igual a `0`. O valor de `nota_media` representa a soma das pontuacoes das avaliacoes.
+
+  #### Resposta `404`
+
+  ```json
+  {
+    "error": "Evento não encontrado"
+  }
+  ```
 
 ## 4. Projetos
 

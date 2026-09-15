@@ -8,7 +8,7 @@
     const STATUS_EVENTOS = ["planejado", "em_andamento", "encerrado"];
 
     // Criar Evento
-    router.post("/", validarToken, validarRoles("coordenador"), async (req, res) => {
+    router.post("/"     , async (req, res) => {
         const { nome_evento, data_evento, status = "planejado" } = req.body;
 
         if (!nome_evento || typeof nome_evento !== "string" || nome_evento.length > 150) {
@@ -39,7 +39,7 @@
 
     // Resumo do andamento das avaliações de um evento
     router.get("/:id_evento/dashboard", validarToken, validarRoles("coordenador"), async (req, res) => {
-        const { id_evento } = req.params;
+        const { id_evento } = req.  params;
 
         const resultado = await pool.query(
             `WITH avaliadores AS (
@@ -114,6 +114,33 @@
             });
         }
 
+        const [graficoResultado, atividadesResultado] = await Promise.all([
+            pool.query(
+                `SELECT
+                     TO_CHAR(a.data_criacao::date, 'YYYY-MM-DD') AS data,
+                     COUNT(*)::int AS avaliacoes
+                 FROM avaliacao a
+                 JOIN projeto p ON p.id_projeto = a.id_projeto
+                 WHERE p.id_evento = $1
+                 GROUP BY a.data_criacao::date
+                 ORDER BY a.data_criacao::date`,
+                [id_evento]
+            ),
+            pool.query(
+                `SELECT
+                     u.nome_usuario,
+                     p.nome_projeto,
+                     a.data_criacao AS data
+                 FROM avaliacao a
+                 JOIN usuario u ON u.id_usuario = a.id_avaliador
+                 JOIN projeto p ON p.id_projeto = a.id_projeto
+                 WHERE p.id_evento = $1
+                 ORDER BY a.data_criacao DESC
+                 LIMIT 10`,
+                [id_evento]
+            )
+        ]);
+
         const dados = resultado.rows[0];
         const {
             id_evento: idEvento,
@@ -146,7 +173,14 @@
                 avaliacoes_esperadas: avaliacoesEsperadas,
                 percentual_conclusao: percentualConclusao
             },
-            projetos
+            projetos,
+            grafico: graficoResultado.rows,
+            atividades_recentes: atividadesResultado.rows.map((atividade) => ({
+                tipo: "avaliacao",
+                mensagem: `${atividade.nome_usuario} avaliou ${atividade.nome_projeto}`,
+                data: atividade.data
+            })),
+            notificacoes: []
         });
     });
 

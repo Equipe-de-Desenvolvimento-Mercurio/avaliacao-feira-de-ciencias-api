@@ -6,6 +6,7 @@ import projectRoute from "./routes/project.js"
 import reviewRoute from "./routes/review.js"
 import teacherRoute from "./routes/teacher.js"
 import criteriosRoute from "./routes/criterios.js"
+import rankingRoute from "./routes/ranking.js"
 import { prepararBanco } from "./config/db.js";
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/project", projectRoute);
 app.use("/review", reviewRoute);
 app.use("/teacher", teacherRoute);
 app.use("/criterios", criteriosRoute);
+app.use("/ranking", rankingRoute);
 
 const iniciarServidor = async () => {
     try {
