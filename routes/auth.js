@@ -63,7 +63,7 @@ router.post("/cadastrar", async (req, res) => {
   let { nome, email, senha, tipo_usuario, tipo_avaliador, eventos } = req.body;
 
   const TIPOS_USUARIOS = ["professor", "coordenador"];
-  const TIPOS_AVALIADOR = ["tecnico", "artistico"];
+  const TIPOS_AVALIADOR = ["tecnico", "artistico", "convidado"];
   if (Array.isArray(eventos) && eventos.length > 0) {
 
     for (let i of eventos) {

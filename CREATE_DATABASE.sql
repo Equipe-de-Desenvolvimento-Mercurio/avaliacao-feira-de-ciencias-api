@@ -1,5 +1,5 @@
 CREATE TYPE tipo_usuario_enum AS ENUM ('professor', 'coordenador');
-CREATE TYPE tipo_avaliador_enum AS ENUM ('tecnico', 'artistico');
+ALTER TYPE tipo_avaliador_enum ADD VALUE IF NOT EXISTS 'convidado';
 CREATE TYPE status_evento_enum AS ENUM ('planejado', 'em_andamento', 'encerrado');
 
 CREATE TABLE usuario (
@@ -159,4 +159,43 @@ VALUES
         5,
         'Organização do Grupo',
         'Avalie a organização e o planejamento do grupo durante a feira. Observe a divisão das responsabilidades, a participação dos integrantes, o domínio das etapas do projeto, a organização dos materiais e equipamentos e a capacidade de executar a apresentação de maneira coordenada e eficiente.'
+    );
+    INSERT INTO criterio_avaliativo
+    (tipo_avaliador, numero_criterio, nome_criterio, descricao)
+VALUES
+    (
+        'convidado',
+        1,
+        'Criatividade',
+        'Avalie a capacidade do grupo de apresentar o projeto de forma original, criativa e atrativa. Considere a utilização de recursos visuais, elementos cenográficos, materiais e soluções que contribuam para tornar a apresentação diferenciada e interessante, sem comprometer a compreensão do conteúdo científico.'
+    ),
+    (
+        'convidado',
+        2,
+        'Conhecimento (domínio da informação)',
+        'Avalie se os integrantes demonstram domínio das informações apresentadas no projeto. Observe se conseguem explicar os conteúdos de forma clara, coerente e segura, utilizando linguagem adequada e demonstrando compreensão sobre o tema, em vez de apenas reproduzir informações memorizadas.'
+    ),
+    (
+        'convidado',
+        3,
+        'Metodologia Científica',
+        'Avalie a forma como o projeto apresenta e comunica sua metodologia científica. Observe se estão claros o problema ou pergunta de pesquisa, os objetivos, as hipóteses quando aplicáveis, os procedimentos realizados, a coleta de dados e as conclusões obtidas. Considere também se a apresentação visual facilita a compreensão dessas etapas.'
+    ),
+    (
+        'convidado',
+        4,
+        'Conhecimento (aplicação prática e dados)',
+        'Avalie a capacidade do grupo de relacionar o conhecimento científico apresentado com sua aplicação prática e com os dados obtidos durante o projeto. Observe se os resultados são apresentados de maneira compreensível e se os estudantes conseguem explicar a importância, as possíveis aplicações e as conclusões a partir das evidências coletadas.'
+    ),
+    (
+        'convidado',
+        5,
+        'Higiene e Uniforme',
+        'Avalie a organização, limpeza e apresentação visual dos integrantes e do espaço utilizado pelo grupo. Considere o uso adequado do uniforme ou vestimenta definida para a feira, a higiene pessoal, a conservação dos materiais e a manutenção de um ambiente limpo e organizado durante a apresentação.'
+    ),
+    (
+        'convidado',
+        6,
+        'Organização do Grupo',
+        'Avalie a organização dos integrantes durante a apresentação. Observe a divisão das funções, a participação equilibrada dos estudantes, a preparação dos materiais, a organização do espaço e a capacidade do grupo de conduzir a apresentação de forma coordenada, sem prejudicar a comunicação do projeto.'
     );
