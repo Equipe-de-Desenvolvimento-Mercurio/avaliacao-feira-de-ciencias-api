@@ -12,24 +12,11 @@ import { prepararBanco } from "./config/db.js";
 
 const app = express();
 app.use(cors({
-    origin: (origin, callback) => {
-        const allowedOrigins = [
-            "https://avaliacao-feira-de-ciencias-front-7hku27lij-ruygoesdev.vercel.app"
-        ];
-
-        const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(origin || "");
-
-        if (!origin || allowedOrigins.includes(origin) || isLocalhost) {
-            callback(null, true);
-            return;
-        }
-
-        callback(new Error("Origem não permitida pelo CORS"));
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+    origin: true,
     credentials: true
 }));
+
+
 app.use(express.json());
 
 // Endpoint de login
