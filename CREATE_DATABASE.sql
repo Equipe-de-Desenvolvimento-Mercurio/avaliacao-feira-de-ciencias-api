@@ -31,9 +31,17 @@ CREATE TABLE participacao_evento (
     UNIQUE (id_usuario, id_evento)
 );
 
+CREATE TABLE categoria (
+    id_categoria    BIGSERIAL PRIMARY KEY,
+    nome_categoria  VARCHAR(150) NOT NULL,  -- ex: "Técnico em Química", "Fund1", "Ensino Médio"
+    descricao       TEXT,
+    data_criacao    TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE projeto (
     id_projeto      BIGSERIAL PRIMARY KEY,
     id_evento       BIGINT NOT NULL REFERENCES evento(id_evento),
+    id_categoria    BIGINT NOT NULL REFERENCES categoria(id_categoria),
     nome_projeto    VARCHAR(200) NOT NULL,
     resumo          TEXT NOT NULL,
     estande         VARCHAR(20) NOT NULL,
@@ -69,8 +77,20 @@ CREATE TABLE criterio_avaliativo (
 CREATE INDEX participacao_evento_evento_idx ON participacao_evento (id_evento);
 CREATE INDEX participacao_evento_usuario_idx ON participacao_evento (id_usuario);
 CREATE INDEX projeto_evento_idx ON projeto (id_evento);
+CREATE INDEX projeto_categoria_idx ON projeto (id_categoria);
 CREATE INDEX avaliacao_projeto_idx ON avaliacao (id_projeto);
 CREATE INDEX avaliacao_avaliador_idx ON avaliacao (id_avaliador);
+
+INSERT INTO categoria (nome_categoria) VALUES
+    ('Fund1'),
+    ('Fund2'),
+    ('Ensino Médio'),
+    ('Técnico em Informática'),
+    ('Técnico em Administração'),
+    ('Técnico em Química'),
+    ('Técnico em Radiologia'),
+    ('Técnico em Enfermagem');
+
 INSERT INTO criterio_avaliativo
     (tipo_avaliador, numero_criterio, nome_criterio, descricao)
 VALUES

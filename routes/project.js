@@ -5,16 +5,17 @@ import { validarToken, validarRoles } from "../services/security.js";
 const router = express.Router();
 
 // {
-//     "id_evento": 1
+//     "id_evento": 1,
+//     "id_categoria": 1,
 //     "nome_projeto" : "Projeto 1",
 //     "resumo" : "Lorem Ipsum",
 //     "estande" : 12
 // }
 
 router.post("/", validarToken, validarRoles("coordenador"), async (req, res) => {
-    let {id_evento, nome_projeto, resumo, estande} = req.body;
+    let {id_evento, id_categoria, nome_projeto, resumo, estande} = req.body;
 
-    if (!id_evento || !nome_projeto || !resumo || !estande){
+    if (!id_evento || !id_categoria || !nome_projeto || !resumo || !estande){
         return res.status(400).json({
             error: "Informações invalidas"
         })
@@ -28,7 +29,15 @@ router.post("/", validarToken, validarRoles("coordenador"), async (req, res) => 
         })
     }
 
-    await pool.query("INSERT INTO projeto (id_evento, nome_projeto, resumo, estande) values ($1, $2, $3, $4)", [id_evento, nome_projeto, resumo, estande]);
+    let categoria = await pool.query("SELECT * FROM categoria WHERE id_categoria = $1", [id_categoria]);
+
+    if (categoria.rowCount == 0){
+        return res.status(404).json({
+            error: "Categoria não encontrada"
+        })
+    }
+
+    await pool.query("INSERT INTO projeto (id_evento, id_categoria, nome_projeto, resumo, estande) values ($1, $2, $3, $4, $5)", [id_evento, id_categoria, nome_projeto, resumo, estande]);
 
     return res.status(200).json({
         message: "Projeto criado com sucesso!!"
@@ -38,6 +47,7 @@ router.post("/", validarToken, validarRoles("coordenador"), async (req, res) => 
 const consultaProjeto = `
     SELECT
         p.*,
+        c.nome_categoria,
         COALESCE((
             SELECT SUM(a.nota_media)
             FROM avaliacao a
@@ -75,7 +85,8 @@ const consultaProjeto = `
             FROM avaliacao a
             WHERE a.id_projeto = p.id_projeto
         ), '[]'::json) AS avaliacoes
-    FROM projeto p`;
+    FROM projeto p
+    JOIN categoria c ON c.id_categoria = p.id_categoria`;
 
 const buscarProjeto = async (idProjeto) => {
     const result = await pool.query(
@@ -102,6 +113,7 @@ router.get("/id/:id_projeto", async (req, res) => {
 // Pegar projetos relacionados a um evento
 router.get("/:id_evento", async (req, res) => {
     let id_evento = req.params.id_evento
+    let { id_categoria } = req.query;
 
     let evento = await pool.query("SELECT * FROM evento WHERE id_evento = $1", [id_evento]);
     if (evento.rowCount == 0){
@@ -110,10 +122,18 @@ router.get("/:id_evento", async (req, res) => {
         });
     }
 
-    let projects = await pool.query(
-        `${consultaProjeto} WHERE p.id_evento = $1 ORDER BY p.id_projeto`,
-        [id_evento]
-    );
+    let projects;
+    if (id_categoria) {
+        projects = await pool.query(
+            `${consultaProjeto} WHERE p.id_evento = $1 AND p.id_categoria = $2 ORDER BY p.id_projeto`,
+            [id_evento, id_categoria]
+        );
+    } else {
+        projects = await pool.query(
+            `${consultaProjeto} WHERE p.id_evento = $1 ORDER BY p.id_projeto`,
+            [id_evento]
+        );
+    }
     if (projects.rowCount == 0){
         return res.status(404).json({
             error: "Não tem projetos para esse evento!!"

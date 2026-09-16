@@ -8,7 +8,10 @@ const router = express.Router();
 router.get("/:id_usuario", validarToken, async (req, res) => {
     const id_usuario = req.params.id_usuario;
 
-    if (String(req.usuario.id_usuario) !== String(id_usuario)) {
+    const ehCoordenador = req.usuario.tipo_usuario === "coordenador";
+    const ehProprioUsuario = String(req.usuario.id_usuario) === String(id_usuario);
+
+    if (!ehCoordenador && !ehProprioUsuario) {
         return res.status(403).json({
             error: "Você só pode consultar seus próprios critérios"
         });
