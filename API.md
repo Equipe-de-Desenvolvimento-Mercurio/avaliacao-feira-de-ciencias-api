@@ -22,6 +22,7 @@ Rotas base:
 | Professores | `/teacher` |
 | Criterios | `/criterios` |
 | Ranking | `/ranking` |
+| Atribuicoes | `/assignment` |
 
 Todas as requisicoes com JSON devem usar:
 
@@ -153,7 +154,7 @@ Cria um usuario. Atualmente esta rota nao exige token.
 
 ### DELETE `/auth/usuario/:id`
 
-Exclui um usuario. Requer token de coordenador.
+Exclui um professor. Requer token de coordenador. Professores que ja possuem avaliacoes nao podem ser excluidos.
 
 #### Resposta `200`
 
@@ -162,6 +163,24 @@ Exclui um usuario. Requer token de coordenador.
   "mensagem": "Usuário deletado com sucesso!"
 }
 ```
+
+### PUT `/auth/usuario/:id`
+
+Edita os dados de um professor e substitui seus eventos vinculados. Requer token de coordenador.
+
+#### Body
+
+```json
+{
+  "nome": "Maria Silva Atualizada",
+  "email": "maria@exemplo.com",
+  "senha": "nova-senha",
+  "tipo_avaliador": "tecnico",
+  "eventos": [1, 2]
+}
+```
+
+`senha` e opcional. O professor nao pode ser desvinculado de um evento enquanto possuir atribuicoes de projetos desse evento.
 
 ## 4. Eventos
 
@@ -385,6 +404,8 @@ Os projetos do dashboard sao ordenados pela maior `pontuacao_total`.
 
 ## 5. Projetos
 
+As operações de criacao, edicao e exclusao de projetos exigem token de coordenador. A exclusao nao remove projetos que ja possuem avaliacoes.
+
 ### POST `/project`
 
 Cria um projeto. Requer token de coordenador.
@@ -471,6 +492,28 @@ GET http://localhost:3000/project/1?id_categoria=6
 ### GET `/project/id/:id_projeto`
 
 Busca um projeto especifico pelo ID. A resposta tem o mesmo formato de um item da listagem anterior, incluindo `id_categoria` e `nome_categoria`.
+
+### PUT `/project/:id_projeto`
+
+Edita um projeto. Requer token de coordenador.
+
+#### Body
+
+```json
+{
+  "id_evento": 1,
+  "id_categoria": 6,
+  "nome_projeto": "Energia Sustentavel Atualizado",
+  "resumo": "Novo resumo do projeto",
+  "estande": "12"
+}
+```
+
+Todos os campos sao obrigatorios. O evento e a categoria precisam existir. Se o projeto possuir atribuicoes, os avaliadores precisam participar do novo evento.
+
+### DELETE `/project/:id_projeto`
+
+Exclui um projeto. Requer token de coordenador. Projetos que ja possuem avaliacoes nao podem ser excluidos.
 
 ### GET `/project/:id_evento/:id_usuario/evaluated`
 
@@ -611,6 +654,8 @@ Exemplo para um avaliador tecnico:
 Uma avaliacao por professor e permitida para cada projeto.
 
 ## 8. Professores
+
+O coordenador pode editar professores por `PUT /auth/usuario/:id` e exclui-los por `DELETE /auth/usuario/:id`. A edicao atualiza os dados cadastrais e substitui os eventos vinculados. Professores com avaliacoes nao podem ser excluidos.
 
 ### GET `/teacher/evento/:id_evento`
 
