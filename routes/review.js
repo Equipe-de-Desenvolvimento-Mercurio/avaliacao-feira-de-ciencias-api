@@ -37,6 +37,8 @@ router.post("/", validarToken, async (req, res) => {
                  JOIN evento e ON e.id_evento = p.id_evento
          JOIN participacao_evento pe ON pe.id_evento = p.id_evento
                           AND pe.id_usuario = $1
+         JOIN atribuicao_projeto ap ON ap.id_projeto = p.id_projeto
+                                   AND ap.id_avaliador = $1
                  WHERE p.id_projeto = $2
                      AND e.status = 'em_andamento'`,
         [id_avaliador, id_projeto]

@@ -98,8 +98,17 @@ const buscarProjeto = async (idProjeto) => {
 };
 
 // Pegar um projeto pelo ID
-router.get("/id/:id_projeto", async (req, res) => {
-    const projeto = await buscarProjeto(req.params.id_projeto);
+router.get("/id/:id_projeto", validarToken, async (req, res) => {
+    const filtroAtribuicao = req.usuario.tipo_usuario === "professor"
+        ? "AND EXISTS (SELECT 1 FROM atribuicao_projeto ap WHERE ap.id_projeto = p.id_projeto AND ap.id_avaliador = $2)"
+        : "";
+    const parametros = req.usuario.tipo_usuario === "professor"
+        ? [req.params.id_projeto, req.usuario.id_usuario]
+        : [req.params.id_projeto];
+    const projeto = await pool.query(
+        `${consultaProjeto} WHERE p.id_projeto = $1 ${filtroAtribuicao}`,
+        parametros
+    ).then((result) => result.rows[0]);
 
     if (!projeto) {
         return res.status(404).json({
@@ -111,7 +120,7 @@ router.get("/id/:id_projeto", async (req, res) => {
 });
 
 // Pegar projetos relacionados a um evento
-router.get("/:id_evento", async (req, res) => {
+router.get("/:id_evento", validarToken, async (req, res) => {
     let id_evento = req.params.id_evento
     let { id_categoria } = req.query;
 
@@ -122,16 +131,22 @@ router.get("/:id_evento", async (req, res) => {
         });
     }
 
+    const filtroAtribuicao = req.usuario.tipo_usuario === "professor"
+        ? "AND EXISTS (SELECT 1 FROM atribuicao_projeto ap WHERE ap.id_projeto = p.id_projeto AND ap.id_avaliador = $2)"
+        : "";
+    const parametrosBase = req.usuario.tipo_usuario === "professor"
+        ? [id_evento, req.usuario.id_usuario]
+        : [id_evento];
     let projects;
     if (id_categoria) {
         projects = await pool.query(
-            `${consultaProjeto} WHERE p.id_evento = $1 AND p.id_categoria = $2 ORDER BY p.id_projeto`,
-            [id_evento, id_categoria]
+            `${consultaProjeto} WHERE p.id_evento = $1 AND p.id_categoria = $${req.usuario.tipo_usuario === "professor" ? 3 : 2} ${filtroAtribuicao} ORDER BY p.id_projeto`,
+            [...parametrosBase, id_categoria]
         );
     } else {
         projects = await pool.query(
-            `${consultaProjeto} WHERE p.id_evento = $1 ORDER BY p.id_projeto`,
-            [id_evento]
+            `${consultaProjeto} WHERE p.id_evento = $1 ${filtroAtribuicao} ORDER BY p.id_projeto`,
+            parametrosBase
         );
     }
     if (projects.rowCount == 0){
@@ -154,6 +169,12 @@ router.get("/:id_evento/:id_usuario/evaluated", validarToken, async (req, res) =
         const projects = await pool.query(
             `${consultaProjeto}
              WHERE p.id_evento = $1
+                             AND EXISTS (
+                                     SELECT 1
+                                     FROM atribuicao_projeto ap
+                                     WHERE ap.id_projeto = p.id_projeto
+                                         AND ap.id_avaliador = $2
+                             )
                AND EXISTS (
                    SELECT 1
                    FROM avaliacao a
@@ -178,6 +199,12 @@ router.get("/:id_evento/:id_usuario/not_evaluated", validarToken, async (req, re
         const projects = await pool.query(
             `${consultaProjeto}
              WHERE p.id_evento = $1
+                             AND EXISTS (
+                                     SELECT 1
+                                     FROM atribuicao_projeto ap
+                                     WHERE ap.id_projeto = p.id_projeto
+                                         AND ap.id_avaliador = $2
+                             )
                AND NOT EXISTS (
                    SELECT 1
                    FROM avaliacao a

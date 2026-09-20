@@ -8,11 +8,15 @@ import teacherRoute from "./routes/teacher.js"
 import criteriosRoute from "./routes/criterios.js"
 import rankingRoute from "./routes/ranking.js"
 import categoriaRoute from "./routes/categoria.js"
+import assignmentRoute from "./routes/assignment.js"
 import { prepararBanco } from "./config/db.js";
 
 const app = express();
 app.use(cors({
-    origin: "https://avaliacao-feira-de-ciencias-front-e.vercel.app",
+    origin: ["https://avaliacao-feira-de-ciencias-front-e.vercel.app",
+        "127.0.0.1:5500",
+        "localhost:5500"
+    ],
     credentials: true
 }));
 
@@ -28,6 +32,7 @@ app.use("/teacher", teacherRoute);
 app.use("/criterios", criteriosRoute);
 app.use("/ranking", rankingRoute);
 app.use("/categoria", categoriaRoute);
+app.use("/assignment", assignmentRoute);
 
 const iniciarServidor = async () => {
     try {

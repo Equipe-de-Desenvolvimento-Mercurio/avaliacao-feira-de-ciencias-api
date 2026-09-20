@@ -88,6 +88,9 @@ router.get("/:id_evento/:id_usuario", validarToken, async (req, res) => {
                  'data_criacao', a.data_criacao
              ) END AS avaliacao
          FROM projeto p
+         JOIN atribuicao_projeto ap
+             ON ap.id_projeto = p.id_projeto
+            AND ap.id_avaliador = $2
          LEFT JOIN avaliacao a
              ON a.id_projeto = p.id_projeto
             AND a.id_avaliador = $2

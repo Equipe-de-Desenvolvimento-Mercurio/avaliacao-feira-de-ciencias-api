@@ -4,6 +4,15 @@ import { validarToken } from "../services/security.js";
 
 const router = express.Router();
 
+const filtroAtribuicao = (usuario, parametro) => usuario.tipo_usuario === "professor"
+	? `AND EXISTS (
+				 SELECT 1
+				 FROM atribuicao_projeto ap
+				 WHERE ap.id_projeto = p.id_projeto
+				   AND ap.id_avaliador = $${parametro}
+			 )`
+	: "";
+
 // Ranking de todos os projetos de um evento
 router.get("/:id_evento", validarToken, async (req, res) => {
 	const { id_evento } = req.params;
@@ -26,6 +35,9 @@ router.get("/:id_evento", validarToken, async (req, res) => {
 			});
 		}
 
+		const parametrosRanking = req.usuario.tipo_usuario === "professor"
+			? [id_evento, req.usuario.id_usuario]
+			: [id_evento];
 		const ranking = await pool.query(
 			`SELECT
 				 RANK() OVER (
@@ -43,10 +55,10 @@ router.get("/:id_evento", validarToken, async (req, res) => {
 			 FROM projeto p
 			 JOIN categoria c ON c.id_categoria = p.id_categoria
 			 LEFT JOIN avaliacao a ON a.id_projeto = p.id_projeto
-			 WHERE p.id_evento = $1
+				 WHERE p.id_evento = $1 ${filtroAtribuicao(req.usuario, 2)}
 			 GROUP BY p.id_projeto, p.id_categoria, c.nome_categoria
 			 ORDER BY c.nome_categoria, colocacao`,
-			[id_evento]
+			parametrosRanking
 		);
 
 		// Agrupa o ranking em blocos por categoria/área
@@ -112,6 +124,9 @@ router.get("/:id_evento/:id_categoria", validarToken, async (req, res) => {
 			});
 		}
 
+		const parametrosRanking = req.usuario.tipo_usuario === "professor"
+			? [id_evento, id_categoria, req.usuario.id_usuario]
+			: [id_evento, id_categoria];
 		const ranking = await pool.query(
 			`SELECT
 				 RANK() OVER (
@@ -125,10 +140,10 @@ router.get("/:id_evento/:id_categoria", validarToken, async (req, res) => {
 				 COUNT(a.id_avaliacao)::int AS total_avaliacoes
 			 FROM projeto p
 			 LEFT JOIN avaliacao a ON a.id_projeto = p.id_projeto
-			 WHERE p.id_evento = $1 AND p.id_categoria = $2
+				 WHERE p.id_evento = $1 AND p.id_categoria = $2 ${filtroAtribuicao(req.usuario, 3)}
 			 GROUP BY p.id_projeto
 			 ORDER BY COALESCE(SUM(a.nota_media), 0) DESC, p.id_projeto`,
-			[id_evento, id_categoria]
+			parametrosRanking
 		);
 
 		return res.status(200).json({
