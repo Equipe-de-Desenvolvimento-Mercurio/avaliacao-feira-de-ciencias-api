@@ -27,6 +27,18 @@ const prepararBanco = async () => {
          ADD CONSTRAINT avaliacao_nota_media_check
          CHECK (nota_media BETWEEN 0 AND 180)`
     );
+
+    await db.query(
+        "ALTER TABLE avaliacao ADD COLUMN IF NOT EXISTS indicacao VARCHAR(30)"
+    );
+    await db.query(
+        "ALTER TABLE avaliacao DROP CONSTRAINT IF EXISTS avaliacao_indicacao_check"
+    );
+    await db.query(
+        `ALTER TABLE avaliacao
+         ADD CONSTRAINT avaliacao_indicacao_check
+         CHECK (indicacao IN ('jovem_cientista', 'inovacao', 'responsabilidade_social'))`
+    );
 };
 
 export { prepararBanco };

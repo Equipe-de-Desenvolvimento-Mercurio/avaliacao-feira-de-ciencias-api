@@ -241,7 +241,16 @@ O ID da URL deve ser o mesmo ID presente no token.
 
 ### GET `/event/:id_evento/dashboard`
 
-Retorna o painel consolidado do evento. Requer token de coordenador.
+Retorna o painel consolidado de um evento especifico, incluindo resumo das avaliacoes, projetos, dados para grafico e atividades recentes. Requer token JWT de um usuario com perfil `coordenador`.
+
+#### Exemplo de requisicao
+
+```http
+GET http://localhost:3000/event/1/dashboard
+Authorization: Bearer SEU_TOKEN
+```
+
+O `:id_evento` deve ser substituido pelo ID do evento que sera consultado. Atualmente, a rota valida o perfil de coordenador, mas nao valida se o coordenador esta vinculado ao evento informado.
 
 #### Resposta `200`
 
@@ -274,11 +283,39 @@ Retorna o painel consolidado do evento. Requer token de coordenador.
       "percentual_conclusao": "100.0",
       "concluido": true
     }
-  ]
+  ],
+  "grafico": [
+    {
+      "data": "2026-09-10",
+      "avaliacoes": 8
+    }
+  ],
+  "atividades_recentes": [
+    {
+      "tipo": "avaliacao",
+      "mensagem": "Maria Silva avaliou Energia Sustentavel",
+      "data": "2026-09-10T13:00:00.000Z"
+    }
+  ],
+  "notificacoes": []
 }
 ```
 
 Os projetos do dashboard sao ordenados pela maior `pontuacao_total`.
+
+`grafico` agrupa a quantidade de avaliacoes por data. `atividades_recentes` lista as dez avaliacoes mais recentes do evento. `notificacoes` e retornado como uma lista vazia enquanto nao houver notificacoes implementadas.
+
+#### Resposta `404`
+
+```json
+{
+  "error": "Evento não encontrado"
+}
+```
+
+#### Resposta `403`
+
+Usuarios que nao possuem perfil `coordenador` nao podem acessar o dashboard.
 
   ### GET `/ranking/:id_evento`
 
@@ -615,9 +652,12 @@ O evento precisa estar com status `em_andamento`.
     8.0,
     9.0
   ],
-  "comentario": "Boa apresentacao e dominio do assunto."
+  "comentario": "Boa apresentacao e dominio do assunto.",
+  "indicacao": "jovem_cientista"
 }
 ```
+
+`indicacao` e opcional. Valores aceitos: `jovem_cientista`, `inovacao` ou `responsabilidade_social`. Pode ser omitida ou enviada como `null` quando o professor nao fizer indicacao. Qualquer outro valor retorna `400`.
 
 Cada nota deve ser numerica e estar entre `0` e `10`. Atualmente sao exigidas exatamente seis notas.
 
@@ -647,7 +687,8 @@ Exemplo para um avaliador tecnico:
   "message": "Projeto avaliado com sucesso!!",
   "soma_notas": 51.5,
   "peso": 3,
-  "pontuacao_total": 154.5
+  "pontuacao_total": 154.5,
+  "indicacao": "jovem_cientista"
 }
 ```
 

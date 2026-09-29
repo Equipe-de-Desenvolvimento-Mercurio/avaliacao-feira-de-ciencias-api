@@ -4,8 +4,10 @@ import { validarToken } from "../services/security.js";
 
 const router = express.Router();
 
+const INDICACOES = ["jovem_cientista", "inovacao", "responsabilidade_social"];
+
 router.post("/", validarToken, async (req, res) => {
-    const { id_projeto, notas, comentario } = req.body;
+    const { id_projeto, notas, comentario, indicacao } = req.body;
     const id_avaliador = req.usuario.id_usuario;
 
     if (req.usuario.tipo_usuario !== "professor" || !id_projeto || !Array.isArray(notas) || notas.length !== 6) {
@@ -18,6 +20,12 @@ router.post("/", validarToken, async (req, res) => {
     if (notasNumericas.some((nota) => !Number.isFinite(nota) || nota < 0 || nota > 10)) {
         return res.status(400).json({
             error: "As notas devem ser números entre 0 e 10"
+        });
+    }
+
+    if (indicacao != null && !INDICACOES.includes(indicacao)) {
+        return res.status(400).json({
+            error: "A indicação deve ser jovem_cientista, inovacao ou responsabilidade_social"
         });
     }
 
@@ -70,15 +78,16 @@ router.post("/", validarToken, async (req, res) => {
     const pontuacaoTotal = somaNotas * peso;
 
     await pool.query(
-        "INSERT INTO avaliacao (id_avaliador, id_projeto, nota1, nota2, nota3, nota4, nota5, nota6, nota_media, comentario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
-        [id_avaliador, id_projeto, ...notasNumericas, pontuacaoTotal, comentario || null]
+        "INSERT INTO avaliacao (id_avaliador, id_projeto, nota1, nota2, nota3, nota4, nota5, nota6, nota_media, comentario, indicacao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+        [id_avaliador, id_projeto, ...notasNumericas, pontuacaoTotal, comentario || null, indicacao ?? null]
     );
 
     return res.status(201).json({
         message: "Projeto avaliado com sucesso!!",
         soma_notas: somaNotas,
         peso,
-        pontuacao_total: pontuacaoTotal
+        pontuacao_total: pontuacaoTotal,
+        indicacao: indicacao ?? null
     });
 });
 

@@ -60,6 +60,7 @@ CREATE TABLE avaliacao (
     nota6           NUMERIC(3,1) NOT NULL CHECK (nota6 BETWEEN 0 AND 10),
     nota_media      NUMERIC(5,1) NOT NULL CHECK (nota_media BETWEEN 0 AND 180),
     comentario      TEXT,
+    indicacao       VARCHAR(30) CHECK (indicacao IN ('jovem_cientista', 'inovacao', 'responsabilidade_social')),
     data_criacao    TIMESTAMP DEFAULT NOW(),
     UNIQUE (id_avaliador, id_projeto)
 );
