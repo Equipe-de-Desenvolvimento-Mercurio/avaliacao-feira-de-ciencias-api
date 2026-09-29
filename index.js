@@ -13,7 +13,7 @@ import { prepararBanco } from "./config/db.js";
 
 const app = express();
 app.use(cors({
-    origin: "https://avaliacao-feira-de-ciencias-front-e.vercel.app/",
+    origin: true,
     credentials: true
 }));
 
