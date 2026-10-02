@@ -172,6 +172,7 @@ const consultaProjeto = `
                     'nota6', a.nota6,
                     'pontuacao_total', a.nota_media,
                     'comentario', a.comentario,
+                    'indicacao', a.indicacao,
                     'data_criacao', a.data_criacao
                 ) ORDER BY a.id_avaliacao
             )
@@ -189,6 +190,40 @@ const buscarProjeto = async (idProjeto) => {
 
     return result.rows[0];
 };
+
+// Avaliadores do projeto: todos os atribuídos (avaliaram ou não) e quem
+// avaliou mesmo tendo a atribuição removida depois
+const consultaAvaliadoresProjeto = `
+    SELECT
+        u.id_usuario AS id_avaliador,
+        u.nome_usuario AS nome_avaliador,
+        u.email AS email_avaliador,
+        u.tipo_avaliador,
+        (ap.id_atribuicao IS NOT NULL) AS atribuido,
+        ap.data_criacao AS data_atribuicao,
+        (a.id_avaliacao IS NOT NULL) AS avaliou,
+        CASE WHEN a.id_avaliacao IS NULL THEN NULL ELSE json_build_object(
+            'id_avaliacao', a.id_avaliacao,
+            'nota1', a.nota1,
+            'nota2', a.nota2,
+            'nota3', a.nota3,
+            'nota4', a.nota4,
+            'nota5', a.nota5,
+            'nota6', a.nota6,
+            'pontuacao_total', a.nota_media,
+            'comentario', a.comentario,
+            'indicacao', a.indicacao,
+            'data_criacao', a.data_criacao
+        ) END AS avaliacao
+    FROM (
+        SELECT id_avaliador FROM atribuicao_projeto WHERE id_projeto = $1
+        UNION
+        SELECT id_avaliador FROM avaliacao WHERE id_projeto = $1
+    ) av
+    JOIN usuario u ON u.id_usuario = av.id_avaliador
+    LEFT JOIN atribuicao_projeto ap ON ap.id_projeto = $1 AND ap.id_avaliador = av.id_avaliador
+    LEFT JOIN avaliacao a ON a.id_projeto = $1 AND a.id_avaliador = av.id_avaliador
+    ORDER BY (a.id_avaliacao IS NOT NULL) DESC, u.nome_usuario`;
 
 // Pegar um projeto pelo ID
 router.get("/id/:id_projeto", validarToken, async (req, res) => {
@@ -209,7 +244,14 @@ router.get("/id/:id_projeto", validarToken, async (req, res) => {
         });
     }
 
-    return res.status(200).json(projeto);
+    const avaliadores = await pool.query(consultaAvaliadoresProjeto, [projeto.id_projeto]);
+
+    return res.status(200).json({
+        ...projeto,
+        avaliadores: avaliadores.rows,
+        total_atribuidos: avaliadores.rows.filter((avaliador) => avaliador.atribuido).length,
+        total_pendentes: avaliadores.rows.filter((avaliador) => avaliador.atribuido && !avaliador.avaliou).length
+    });
 });
 
 // Pegar projetos relacionados a um evento

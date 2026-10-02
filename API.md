@@ -379,6 +379,28 @@ Usuarios que nao possuem perfil `coordenador` nao podem acessar o dashboard.
 
   Todos os projetos do evento sao listados, inclusive os que ainda nao receberam avaliacao. Projetos sem avaliacao possuem `nota_media` igual a `0`. O valor de `nota_media` representa a soma das pontuacoes das avaliacoes. A `colocacao` e calculada separadamente dentro de cada categoria.
 
+  #### Ranking por indicacao
+
+  A resposta tambem traz o objeto `indicacoes`, com um ranking para cada tipo de indicacao (`jovem_cientista`, `inovacao` e `responsabilidade_social`), considerando o evento inteiro (todas as categorias). Os projetos sao ordenados por quem recebeu mais indicacoes daquele tipo; empates dividem a mesma `colocacao`. Projetos sem nenhuma indicacao do tipo nao aparecem, entao a lista pode vir vazia.
+
+  ```json
+  "indicacoes": {
+    "jovem_cientista": [
+      {
+        "colocacao": "1",
+        "id_projeto": "3",
+        "nome_projeto": "Energia Sustentavel",
+        "estande": "12",
+        "id_categoria": "6",
+        "nome_categoria": "Tecnico em Quimica",
+        "total_indicacoes": 3
+      }
+    ],
+    "inovacao": [],
+    "responsabilidade_social": []
+  }
+  ```
+
   #### Resposta `404`
 
   ```json
@@ -427,9 +449,16 @@ Usuarios que nao possuem perfil `coordenador` nao podem acessar o dashboard.
         "nota_media": "342.0",
         "total_avaliacoes": 4
       }
-    ]
+    ],
+    "indicacoes": {
+      "jovem_cientista": [],
+      "inovacao": [],
+      "responsabilidade_social": []
+    }
   }
   ```
+
+  `indicacoes` tem o mesmo formato do ranking por evento, mas considera apenas os projetos da categoria.
 
   #### Resposta `404`
 
@@ -528,7 +557,50 @@ GET http://localhost:3000/project/1?id_categoria=6
 
 ### GET `/project/id/:id_projeto`
 
-Busca um projeto especifico pelo ID. A resposta tem o mesmo formato de um item da listagem anterior, incluindo `id_categoria` e `nome_categoria`.
+Busca um projeto especifico pelo ID. A resposta tem o mesmo formato de um item da listagem anterior, incluindo `id_categoria` e `nome_categoria`, e adiciona a lista `avaliadores` com os campos `total_atribuidos` e `total_pendentes`.
+
+`avaliadores` contem todos os professores atribuidos ao projeto, **inclusive os que ainda nao avaliaram**, e tambem quem avaliou mas teve a atribuicao removida depois (`atribuido: false`). Os que ja avaliaram aparecem primeiro; quem ainda nao avaliou tem `avaliou: false` e `avaliacao: null`.
+
+```json
+{
+  "id_projeto": "3",
+  "nome_projeto": "Energia Sustentavel",
+  "...": "demais campos do projeto",
+  "avaliadores": [
+    {
+      "id_avaliador": "5",
+      "nome_avaliador": "Maria Souza",
+      "email_avaliador": "maria@escola.com",
+      "tipo_avaliador": "tecnico",
+      "atribuido": true,
+      "data_atribuicao": "2026-09-20T10:00:00.000Z",
+      "avaliou": true,
+      "avaliacao": {
+        "id_avaliacao": "12",
+        "nota1": 9, "nota2": 8, "nota3": 10, "nota4": 9, "nota5": 10, "nota6": 8,
+        "pontuacao_total": 162,
+        "comentario": "Otimo projeto",
+        "indicacao": "jovem_cientista",
+        "data_criacao": "2026-09-29T14:00:00"
+      }
+    },
+    {
+      "id_avaliador": "7",
+      "nome_avaliador": "Joao Lima",
+      "email_avaliador": "joao@escola.com",
+      "tipo_avaliador": "artistico",
+      "atribuido": true,
+      "data_atribuicao": "2026-09-20T10:00:00.000Z",
+      "avaliou": false,
+      "avaliacao": null
+    }
+  ],
+  "total_atribuidos": 2,
+  "total_pendentes": 1
+}
+```
+
+Os itens de `avaliacoes` (aqui e nas listagens de projetos) agora tambem trazem o campo `indicacao`.
 
 ### PUT `/project/:id_projeto`
 

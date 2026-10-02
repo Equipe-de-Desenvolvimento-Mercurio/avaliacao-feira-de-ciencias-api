@@ -85,6 +85,7 @@ router.get("/:id_evento/:id_usuario", validarToken, async (req, res) => {
                  'nota6', a.nota6,
                  'pontuacao_total', a.nota_media,
                  'comentario', a.comentario,
+                 'indicacao', a.indicacao,
                  'data_criacao', a.data_criacao
              ) END AS avaliacao
          FROM projeto p

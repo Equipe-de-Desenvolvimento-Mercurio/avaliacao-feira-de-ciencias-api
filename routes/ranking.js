@@ -13,6 +13,49 @@ const filtroAtribuicao = (usuario, parametro) => usuario.tipo_usuario === "profe
 			 )`
 	: "";
 
+const INDICACOES = ["jovem_cientista", "inovacao", "responsabilidade_social"];
+
+// Ranking por indicação: projetos com mais indicações de cada tipo.
+// Projetos sem nenhuma indicação daquele tipo não aparecem.
+const buscarRankingIndicacoes = async (usuario, idEvento, idCategoria = null) => {
+	const parametros = [idEvento, idCategoria];
+	if (usuario.tipo_usuario === "professor") {
+		parametros.push(usuario.id_usuario);
+	}
+
+	const resultado = await pool.query(
+		`SELECT
+			 a.indicacao,
+			 RANK() OVER (
+				 PARTITION BY a.indicacao
+				 ORDER BY COUNT(*) DESC
+			 ) AS colocacao,
+			 p.id_projeto,
+			 p.nome_projeto,
+			 p.estande,
+			 p.id_categoria,
+			 c.nome_categoria,
+			 COUNT(*)::int AS total_indicacoes
+		 FROM avaliacao a
+		 JOIN projeto p ON p.id_projeto = a.id_projeto
+		 JOIN categoria c ON c.id_categoria = p.id_categoria
+		 WHERE p.id_evento = $1
+		   AND ($2::bigint IS NULL OR p.id_categoria = $2::bigint)
+		   AND a.indicacao IS NOT NULL
+		   ${filtroAtribuicao(usuario, 3)}
+		 GROUP BY a.indicacao, p.id_projeto, c.nome_categoria
+		 ORDER BY a.indicacao, colocacao, p.id_projeto`,
+		parametros
+	);
+
+	const indicacoes = Object.fromEntries(INDICACOES.map((indicacao) => [indicacao, []]));
+	for (const { indicacao, ...dadosProjeto } of resultado.rows) {
+		indicacoes[indicacao].push(dadosProjeto);
+	}
+
+	return indicacoes;
+};
+
 // Ranking de todos os projetos de um evento
 router.get("/:id_evento", validarToken, async (req, res) => {
 	const { id_evento } = req.params;
@@ -81,7 +124,8 @@ router.get("/:id_evento", validarToken, async (req, res) => {
 
 		return res.status(200).json({
 			evento: evento.rows[0],
-			categorias
+			categorias,
+			indicacoes: await buscarRankingIndicacoes(req.usuario, id_evento)
 		});
 	} catch (error) {
 		console.error("Erro ao gerar ranking:", error);
@@ -149,7 +193,8 @@ router.get("/:id_evento/:id_categoria", validarToken, async (req, res) => {
 		return res.status(200).json({
 			evento: evento.rows[0],
 			categoria: categoria.rows[0],
-			ranking: ranking.rows
+			ranking: ranking.rows,
+			indicacoes: await buscarRankingIndicacoes(req.usuario, id_evento, id_categoria)
 		});
 	} catch (error) {
 		console.error("Erro ao gerar ranking da categoria:", error);

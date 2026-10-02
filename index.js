@@ -12,8 +12,14 @@ import assignmentRoute from "./routes/assignment.js"
 import { prepararBanco } from "./config/db.js";
 
 const app = express();
+// O navegador envia o Origin sem barra final; localhost/127.0.0.1 em qualquer porta liberam o desenvolvimento local.
+const origensPermitidas = [
+    "https://avaliacao-feira-de-ciencias-front-k72idnzez-ruygoesdev.vercel.app",
+    /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/
+];
+
 app.use(cors({
-    origin: "https://avaliacao-feira-de-ciencias-front-k72idnzez-ruygoesdev.vercel.app/",
+    origin: origensPermitidas,
     credentials: true
 }));
 
