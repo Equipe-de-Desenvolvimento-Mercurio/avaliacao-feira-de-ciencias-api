@@ -70,7 +70,7 @@ router.post("/", validarToken, async (req, res) => {
     const pesos = {
         artistico: 1,
         tecnico: 3,
-        convidado: 2
+        convidado: 1
     };
     const tipoAvaliador = avaliador.rows[0].tipo_avaliador;
     const peso = pesos[tipoAvaliador];
