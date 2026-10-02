@@ -19,7 +19,11 @@ const origensPermitidas = [
 ];
 
 app.use(cors({
+<<<<<<< HEAD
     origin: origensPermitidas,
+=======
+    origin: true,
+>>>>>>> d55cb95fdcff7d5fd505971711563dfaba30f1e9
     credentials: true
 }));
 
